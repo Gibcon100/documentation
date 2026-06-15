@@ -15,7 +15,7 @@ import urllib.request
 import urllib.error
 
 # ── Konfiguration ──────────────────────────────────────────────────────────────
-MAC_IP   = "192.168.1.XXX"   # ← IP-Adresse des Mac im Heimnetz eintragen
+MAC_IP   = "Minizwei.local"   # Mac Bonjour-Hostname – kein feste IP noetig
 MAC_PORT = 8765
 # ──────────────────────────────────────────────────────────────────────────────
 
