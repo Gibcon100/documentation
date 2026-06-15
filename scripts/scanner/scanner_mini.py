@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys,json,urllib.request,subprocess,http.server,threading,queue,socket,signal
 R='Einkaufsliste'
-P=8765
+P=8770
 def lookup(b):
  try:
   req=urllib.request.Request('https://world.openfoodfacts.org/api/v2/product/'+b+'.json?fields=product_name_de,product_name,brands',headers={'User-Agent':'J/1'})
