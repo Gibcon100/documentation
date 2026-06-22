@@ -1,6 +1,6 @@
 #!/bin/bash
 # Jarvis Barcode Scanner - Netzwerk-Modus (Raspberry Pi)
-# Doppelklick genuegt – installiert sich selbst und startet sofort.
+# Doppelklick genuegt - installiert sich selbst und startet sofort.
 
 SCRIPT_PATH="$HOME/Scripts/barcode_scanner.py"
 mkdir -p "$HOME/Scripts"
@@ -27,17 +27,32 @@ def lookup_product(barcode):
     return None
 
 def add_to_reminders(item):
-    # osascript argv: Produktname als Argument uebergeben – kein Escaping noetig,
-    # funktioniert mit allen Sonderzeichen (Anfuehrungszeichen, Umlaute, etc.)
+    # osascript argv: kein String-Escaping noetig (Anfuehrungszeichen, Umlaute etc. sicher).
+    # Waehlt explizit iCloud-Account - verhindert stille Ablage im lokalen Account.
     script = """
 on run argv
     set itemName to item 1 of argv
     set listName to item 2 of argv
     tell application "Reminders"
-        if not (exists list listName) then
-            make new list with properties {name:listName}
+        set targetAccount to missing value
+        repeat with acc in accounts
+            if name of acc contains "iCloud" then
+                set targetAccount to acc
+                exit repeat
+            end if
+        end repeat
+        if targetAccount is missing value then
+            if (count of accounts) > 0 then
+                set targetAccount to first account
+            else
+                error "Kein Reminders-Account gefunden"
+            end if
         end if
-        make new reminder at end of list listName with properties {name:itemName}
+        if not (exists list listName of targetAccount) then
+            make new list at targetAccount with properties {name:listName}
+        end if
+        make new reminder at end of list listName of targetAccount with properties {name:itemName}
+        return name of targetAccount
     end tell
 end run
 """
@@ -45,8 +60,8 @@ end run
                             capture_output=True, text=True)
     if result.returncode != 0:
         print('  Reminders-Fehler: ' + (result.stderr.strip() or 'Keine Berechtigung?'))
-        print('  -> Systemeinstellungen -> Datenschutz -> Automatisierung -> Terminal -> Reminders')
-    return result.returncode == 0
+        print('  -> Systemeinstellungen -> Datenschutz -> Automatisierung -> Terminal -> Reminders anhaken')
+    return result.returncode == 0, result.stdout.strip()
 
 def process(barcode, scanned):
     barcode = barcode.strip()
@@ -62,8 +77,9 @@ def process(barcode, scanned):
             return
         if not name:
             return
-    if add_to_reminders(name):
-        print('  OK: ' + name + ' -> Einkaufsliste')
+    ok, account = add_to_reminders(name)
+    if ok:
+        print('  OK: ' + name + ' -> Einkaufsliste  [Account: ' + account + ']')
         scanned.append(name)
     else:
         print('  FEHLER: Reminders nicht erreichbar')
@@ -110,7 +126,7 @@ def run_network(scanned):
     ip = get_local_ip()
     print('  Mac-IP:   ' + ip)
     print('  Pi sendet an: http://' + ip + ':' + str(PI_SERVER_PORT))
-    print('  Bereit – warte auf Barcodes vom Raspberry Pi ...')
+    print('  Bereit - warte auf Barcodes vom Raspberry Pi ...')
     print()
     try:
         while True:

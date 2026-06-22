@@ -11,11 +11,23 @@ def lookup(b):
    return(p.get('product_name_de')or p.get('product_name')or p.get('brands','')).strip()or None
  except:pass
 def remind(n):
- # osascript argv: Produktname als Argument – kein Escaping nötig
- scpt='on run argv\nset i to item 1 of argv\nset l to item 2 of argv\ntell application "Reminders"\nif not (exists list l) then\nmake new list with properties {name:l}\nend if\nmake new reminder at end of list l with properties {name:i}\nend tell\nend run'
+ # osascript argv: kein String-Escaping, explizit iCloud-Account
+ scpt=('on run argv\n'
+       'set i to item 1 of argv\n'
+       'set l to item 2 of argv\n'
+       'tell application "Reminders"\n'
+       'set t to missing value\n'
+       'repeat with acc in accounts\n'
+       'if name of acc contains "iCloud" then\nset t to acc\nexit repeat\nend if\n'
+       'end repeat\n'
+       'if t is missing value then\nif (count of accounts)>0 then\nset t to first account\nend if\nend if\n'
+       'if not (exists list l of t) then\nmake new list at t with properties {name:l}\nend if\n'
+       'make new reminder at end of list l of t with properties {name:i}\n'
+       'return name of t\n'
+       'end tell\nend run')
  r=subprocess.run(['osascript','-e',scpt,n,R],capture_output=True,text=True)
  if r.returncode!=0:print('  Reminders-Fehler:',r.stderr.strip()or'Keine Berechtigung?')
- return r.returncode==0
+ return r.returncode==0,r.stdout.strip()
 class H(http.server.BaseHTTPRequestHandler):
  def __init__(self,q,*a,**kw):self._q=q;super().__init__(*a,**kw)
  def do_POST(self):
@@ -44,5 +56,7 @@ while True:
   print('(unbekannt)')
   try:n=input('  Name: ').strip()
   except:continue
- if n and remind(n):print('-> OK:',n)
- else:print('-> Fehler Reminders')
+ if n:
+  ok,acc=remind(n)
+  if ok:print('-> OK:',n,'['+acc+']')
+  else:print('-> Fehler Reminders')
