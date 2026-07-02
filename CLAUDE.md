@@ -132,9 +132,17 @@ before pushing to catch these.
 - `source/_redirects` defines Cloudflare Pages redirect rules — edit it when moving
   or renaming pages so old URLs keep working.
 
+## Installed Agent Skills
+
+- **`.claude/skills/frontend-design/`** — Anthropic's official `frontend-design`
+  skill (from [anthropics/skills](https://github.com/anthropics/skills), Apache-2.0).
+  Vendored into the repo so it is available in every Claude Code session on this
+  project. It guides distinctive, intentional visual design (typography, color,
+  motion, layout) and activates automatically for frontend/UI work.
+
 ## Notes for AI assistants
 
-- This repo is **content only** — do not add application/integration code here.
+- This repo is **documentation content** — do not add application/integration code here.
 - Keep changes scoped to Markdown, assets, `mkdocs.yml` nav, and the small Python
   helpers in `source/macros.py` / `source/hooks/`.
 - When you move or rename a page, update **both** the `nav:` in `mkdocs.yml` **and**
